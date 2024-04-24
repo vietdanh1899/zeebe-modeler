@@ -1,10 +1,10 @@
 import {useEffect, useRef} from 'react'
 import './App.css'
-import 'bpmn-js/dist/assets/diagram-js.css';
-import 'bpmn-js/dist/assets/bpmn-js.css';
+import diagramJsCss from 'bpmn-js/dist/assets/diagram-js.css?inline';
+import bpmnJsCss from 'bpmn-js/dist/assets/bpmn-js.css?inline';
 
-import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css';
-import '@bpmn-io/properties-panel/assets/properties-panel.css';
+import bpmnEmbeddedCss from 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css?inline';
+import propertiesPanelCss from '@bpmn-io/properties-panel/assets/properties-panel.css?inline';
 
 import {
     BpmnPropertiesPanelModule,
@@ -28,6 +28,10 @@ const Wrapper = styled.div`
     width: 100%;
     height: 100%;
     display: flex;
+    ${diagramJsCss}
+    ${bpmnJsCss}
+    ${bpmnEmbeddedCss}
+    ${propertiesPanelCss}
 `
 
 const ModelerContainer = styled.div`
