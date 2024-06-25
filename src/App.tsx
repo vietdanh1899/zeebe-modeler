@@ -1,4 +1,4 @@
-import {useEffect, useRef} from 'react'
+import {forwardRef, useEffect, useImperativeHandle, useRef} from 'react'
 import './App.css'
 import diagramJsCss from 'bpmn-js/dist/assets/diagram-js.css?inline';
 import bpmnJsCss from 'bpmn-js/dist/assets/bpmn-js.css?inline';
@@ -7,9 +7,7 @@ import bpmnEmbeddedCss from 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css
 import propertiesPanelCss from '@bpmn-io/properties-panel/assets/properties-panel.css?inline';
 
 import {
-    BpmnPropertiesPanelModule,
-    BpmnPropertiesProviderModule,
-    ZeebePropertiesProviderModule
+  BpmnPropertiesPanelModule, BpmnPropertiesProviderModule, ZeebePropertiesProviderModule
 } from 'bpmn-js-properties-panel';
 import BpmnModeler from 'bpmn-js/lib/Modeler';
 // Camunda 8 moddle extension
@@ -52,67 +50,69 @@ const PropertiesPanelContainer = styled.div<{ $isDragging: boolean }>`
     }
 
     ${props => props.$isDragging && `
-        filter: blur(5px);`
-    }
+        filter: blur(5px);`}
 `
 
-function App() {
-    const containerRef = useRef(null);
-    const bpmnModeler = useRef<BpmnModeler>();
-    const propertiesPanelRef = useRef(null);
+export interface ChildProps {
+  xml?: string;
+}
 
-    const {
-        isDragging: isPropertiesPanelDragging,
-        position: propertiesPanelWidth,
-        separatorProps: dragBarProps
-    } = useResizable({
-        axis: "x",
-        initial: 200,
-        min: 50,
-        reverse: true
+export interface ChildRef {
+  xml: () => Promise<string | undefined>;
+}
+
+const App = forwardRef<ChildRef, ChildProps>(({xml}, ref) => {
+  const containerRef = useRef(null);
+  const bpmnModeler = useRef<BpmnModeler>();
+  const propertiesPanelRef = useRef(null);
+
+  const {
+    isDragging: isPropertiesPanelDragging, position: propertiesPanelWidth, separatorProps: dragBarProps
+  } = useResizable({
+    axis: "x", initial: 200, min: 50, reverse: true
+  });
+
+  useImperativeHandle(ref, () => ({
+    xml: async () => {
+      const {xml} = await bpmnModeler.current?.saveXML({format: true}) || {};
+      return xml;
+    }
+  }), []);
+
+  useEffect(() => {
+    console.log('mounted')
+    const container = containerRef.current;
+
+    bpmnModeler.current = new BpmnModeler({
+      container: container ?? undefined,
+      additionalModules: [BpmnPropertiesPanelModule, BpmnPropertiesProviderModule, ZeebePropertiesProviderModule, ZeebeBehaviorsModule, gridModule],
+      moddleExtensions: {
+        zeebe: zeebeModdle
+      }
     });
 
-    useEffect(() => {
-        console.log('mounted')
-        const container = containerRef.current;
+    const propertiesPanel: any = bpmnModeler.current.get('propertiesPanel');
+    propertiesPanel.attachTo(propertiesPanelRef.current!);
 
-        bpmnModeler.current = new BpmnModeler({
-            container: container ?? undefined,
-            additionalModules: [
-                BpmnPropertiesPanelModule,
-                BpmnPropertiesProviderModule,
-                ZeebePropertiesProviderModule,
-                ZeebeBehaviorsModule,
-                gridModule
-            ],
-            moddleExtensions: {
-                zeebe: zeebeModdle
-            }
-        });
+    bpmnModeler.current?.importXML(xml ?? diagramXML);
 
-        const propertiesPanel: any = bpmnModeler.current.get('propertiesPanel');
-        propertiesPanel.attachTo(propertiesPanelRef.current!);
+    return () => {
+      console.log('unmounted')
+      bpmnModeler.current!.destroy();
+    }
+  }, [])
 
-        bpmnModeler.current?.importXML(diagramXML);
+  return (<Wrapper>
+    <ModelerContainer ref={containerRef}/>
 
-        return () => {
-            console.log('unmounted')
-            bpmnModeler.current!.destroy();
-        }
-    }, [])
+    <SampleSplitter
+      isDragging={isPropertiesPanelDragging}
+      {...dragBarProps}
+    />
 
-    return (
-        <Wrapper>
-            <ModelerContainer ref={containerRef}/>
-
-            <SampleSplitter
-                isDragging={isPropertiesPanelDragging}
-                {...dragBarProps}
-            />
-
-            <PropertiesPanelContainer $isDragging={isPropertiesPanelDragging} ref={propertiesPanelRef}
-                                      style={{width: propertiesPanelWidth}}></PropertiesPanelContainer>
-        </Wrapper>)
-}
+    <PropertiesPanelContainer $isDragging={isPropertiesPanelDragging} ref={propertiesPanelRef}
+                              style={{width: propertiesPanelWidth}}></PropertiesPanelContainer>
+  </Wrapper>)
+});
 
 export default App
