@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script type="importmap">
+        {
+          "imports": {
+            "react": "https://esm.sh/react@18",
+            "react-dom": "https://esm.sh/react-dom@18"
+          }
+        }
+    </script>
+    <script>
+        window.process = {
+            env: {
+                NODE_ENV: "production"
+            }
+        };
+    </script>
+    <script src="../dist/zeebe-modeler.js" type="module"></script>
+</head>
+<body>
+    <div style="height: 100vh; width: 100%;">
+        <zeebe-modeler/>
+    </div>
+</body>
+</html>
