@@ -7,6 +7,7 @@ class ZeebeModeler extends HTMLElement {
   container: HTMLElement;
   root: ReactDOM.Root;
   child: ChildRef | null = null;
+  inputXml: string | undefined = undefined;
 
   constructor() {
     super();
@@ -17,6 +18,10 @@ class ZeebeModeler extends HTMLElement {
 
   get xml(): Promise<string | undefined> {
     return this.child?.xml() ?? Promise.resolve(undefined);
+  }
+
+  set xml(value: string) {
+    this.inputXml = value;
   }
 
   connectedCallback(): void {
@@ -35,6 +40,7 @@ class ZeebeModeler extends HTMLElement {
     this.root.render(<App ref={(childComponent) => {
       this.child = childComponent
     }}
+                          xml={this.inputXml}
     />);
   }
 }
